@@ -39,7 +39,7 @@ class LandingPage extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.active) {
           // if that data is not null that we return home , else sign in
           User user = snapshot.data; // can return null value
-          return (user == null) ? SignScreen() 
+          return (user == null) ? SignScreen.create(context) 
           : HomeScreen();
         }else {
           // if no connection a loadingindicatior will be shown
