@@ -3,27 +3,22 @@ import 'package:authentification/models/user_model.dart';
 import 'package:authentification/services/auth.dart';
 import 'package:flutter/foundation.dart';
 
-class SignInBloc {
+class SignInManager {
 
+  
+  SignInManager({@required this.auth, @required this.isLoading});
+  
+  final ValueNotifier<bool> isLoading;
   final Auth auth;
-  SignInBloc({@required this.auth});
-
-  final StreamController<bool> _streamController = StreamController<bool>();
-
-  Stream<bool> get isLoadingStream  => _streamController.stream;
-
-  void dispose()  => _streamController.close();
-
-  void _updateStreamState(bool state)  =>  _streamController.add(state);
 
   Future<void> _signInWith(Future<User> Function() signInWithFunction) async {
 
     try {     
-      _updateStreamState(true);
+      isLoading.value = true;
       return await signInWithFunction();
 
     } catch (e) {
-      _updateStreamState(false);
+      isLoading.value = false;
       rethrow;
     }
   }

@@ -1,26 +1,24 @@
 import 'package:authentification/common_widgets/alert_dialog/platform_exception_alert_dialog.dart';
-import 'package:authentification/screens/email_signIn/email_signIn_bloc.dart';
-import 'package:authentification/screens/email_signIn/email_signIn_model.dart';
+import 'package:authentification/screens/email_signIn/email_signIn_model_manager.dart';
 import 'package:authentification/services/auth.dart';
 import 'package:authentification/services/validation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-class EmailSignInFormBlocBased extends StatefulWidget
+class EmailSignInFormChangeNotifier extends StatefulWidget
     with EmailAndPasswordValidationFunctionality {
 
-  final EmailSignInBloc bloc;
+  final EmailSignInModelChangeNotifier model;
 
-  EmailSignInFormBlocBased({Key key, @required this.bloc}) : super(key: key);
+  EmailSignInFormChangeNotifier({Key key, @required this.model}) : super(key: key);
 
   static Widget create(BuildContext context) {
     final Auth auth = Provider.of<Auth>(context, listen: false);
-    return Provider<EmailSignInBloc>(
-      create: (context) => EmailSignInBloc(auth: auth),
-      dispose: (context, bloc) => bloc.dispose(),
-      child: Consumer<EmailSignInBloc>(
-          builder: (context, bloc, _) => EmailSignInFormBlocBased(bloc: bloc)),
+    return ChangeNotifierProvider<EmailSignInModelChangeNotifier>(
+      create: (context) => EmailSignInModelChangeNotifier(auth: auth),
+      child: Consumer<EmailSignInModelChangeNotifier>(
+          builder: (context, model, _) => EmailSignInFormChangeNotifier(model: model)),
     );
   }
 
@@ -28,7 +26,11 @@ class EmailSignInFormBlocBased extends StatefulWidget
   _EmailSignInFormState createState() => _EmailSignInFormState();
 }
 
-class _EmailSignInFormState extends State<EmailSignInFormBlocBased> {
+class _EmailSignInFormState extends State<EmailSignInFormChangeNotifier> {
+
+  EmailSignInModelChangeNotifier get model => widget.model;
+
+
   final TextEditingController _emailController =
       TextEditingController(); // controlling the email of TextField
   final TextEditingController _passwordController =
@@ -37,7 +39,7 @@ class _EmailSignInFormState extends State<EmailSignInFormBlocBased> {
   // Function to toggle the forms with enums
   _toggleForm(BuildContext context) {
     
-    widget.bloc.toggleFormType();
+    model.toggleFormType();
 
     _emailController.clear(); // once switched form clear text in TextField
     _passwordController.clear(); // once switched form clear text in TextField
@@ -46,7 +48,7 @@ class _EmailSignInFormState extends State<EmailSignInFormBlocBased> {
   // functions to run sign or register functions from auth class
   Future<void> _submit() async {
     try {
-      await widget.bloc.submit();
+      await model.submit();
 
       Navigator.of(context)
           .pop(); // stream will take us to home page if user != null, hence close email screen with pop
@@ -67,19 +69,14 @@ class _EmailSignInFormState extends State<EmailSignInFormBlocBased> {
   @override
   Widget build(BuildContext context) {
   
-    return StreamBuilder<EmailSignInModel>(
-        stream: widget.bloc.emailSignInStream,
-        initialData: EmailSignInModel(),
-        builder: (context, snapshot) {
-          final EmailSignInModel _model = snapshot.data;
-          return _buildContent(_model);
-        });
+    return _buildContent();
+
   }
 
-  Widget _buildContent(EmailSignInModel model) {
+  Widget _buildContent() {
     return Scaffold(
       appBar: AppBar(
-        title: Text(model.primaryButtonText),
+        title: Text(widget.model.primaryButtonText),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -93,19 +90,19 @@ class _EmailSignInFormState extends State<EmailSignInFormBlocBased> {
                 maxLines: 1,
                 controller: _emailController,
                 onChanged: (_email) =>
-                    widget.bloc.updateEmail(_email), // everytime text changed update state
+                    model.updateEmail(_email), // everytime text changed update state
                 decoration: InputDecoration(
                   labelText: 'Email',
                   hintText: 'test@test.com',
-                  errorText: model.showEmailErrorText, // if emtpy textField, and submitted clicked error text will be shown
-                  enabled: model.isLoading ==
+                  errorText: widget.model.showEmailErrorText, // if emtpy textField, and submitted clicked error text will be shown
+                  enabled: widget.model.isLoading ==
                       false, // when loading false , textField cant be used
                 ),
               ),
               TextField(
                 controller: _passwordController,
                 onChanged: (_password) =>
-                    widget.bloc.updatePassword(_password), // everytime text changed update state
+                    model.updatePassword(_password), // everytime text changed update state
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Password',
